@@ -23,7 +23,7 @@ body {
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: auto 1fr 1fr;
+    grid-template-rows: auto 1fr 1fr auto;
     gap: 8px;
     padding: 8px;
     height: calc(100vh - 50px);
@@ -256,6 +256,12 @@ body {
                 <div>30-60: <span id="t-3060" style="color:#888">-.--</span>s</div>
                 <div style="margin-top:8px; font-size:13px; color:#00ff66;">BEST: <span id="best-time" style="color:#888; font-size:16px; font-weight:bold;">-.--</span>s</div>
             </div>
+            <div style="margin-top:12px; padding-top:8px; border-top:1px solid #222; font-size:11px;">
+                <div style="color:#555; margin-bottom:4px;">ESTIMATED TARGETS</div>
+                <div style="color:#fff;">Standard: <span style="color:#888;">4.5s</span></div>
+                <div style="color:#ff4444;">Ghost (Boost): <span style="color:#ff6666;">~4.0s</span></div>
+                <div style="color:#ff6600;">Colin Mode: <span style="color:#ffaa00;">~3.5s</span></div>
+            </div>
         </div>
     </div>
 
@@ -351,9 +357,45 @@ body {
             <span style="font-family:Consolas; font-size:16px;" id="slip-val">0.0%</span>
         </div>
     </div>
+
+    <!-- Pre-Run Checklist -->
+    <div class="panel" style="grid-column: 1 / -1; padding: 15px 20px;">
+        <div class="panel-title">Pre-Run Checklist</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px 20px; font-size:13px; margin-top:10px;">
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">Battery above 80%</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">Battery warm (drive 10 min first)</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">Obstacle-Aware Acceleration OFF</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">AC / Climate OFF</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">Windows up</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">Creep mode OFF</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">Tires warm (couple pulls first)</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">Flat straight road, clear ahead</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">Steering set to Sport</span></label>
+            <label style="cursor:pointer;"><input type="checkbox" class="runchk" style="margin-right:8px;"><span style="color:#aaa;">No passengers / extra weight</span></label>
+        </div>
+        <div id="checklist-status" style="margin-top:10px; text-align:center; font-weight:bold; font-size:14px; color:#666;">Complete checklist before launch</div>
+    </div>
 </div>
 
+<p style="text-align:center; color:#ff6644; font-size:11px; padding:5px;">For educational and research purposes only. Use at your own risk.</p>
+
 <script>
+// Checklist counter
+document.querySelectorAll('.runchk').forEach(cb => {
+    cb.addEventListener('change', () => {
+        const total = document.querySelectorAll('.runchk').length;
+        const checked = document.querySelectorAll('.runchk:checked').length;
+        const statusEl = document.getElementById('checklist-status');
+        if (checked === total) {
+            statusEl.textContent = 'ALL CLEAR — READY TO LAUNCH';
+            statusEl.style.color = '#00ff66';
+        } else {
+            statusEl.textContent = checked + '/' + total + ' — complete checklist before launch';
+            statusEl.style.color = checked > 7 ? '#ffaa00' : '#666';
+        }
+    });
+});
+
 // Ghost mode controls
 async function setGhost(mode) {
     try {
