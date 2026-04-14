@@ -306,6 +306,10 @@ body {
                 <span class="info-value" id="motor-temp">--&deg;C</span>
             </div>
             <div class="info-row">
+                <span class="info-label">Inverter Temp</span>
+                <span class="info-value" id="inverter-temp">--&deg;C</span>
+            </div>
+            <div class="info-row">
                 <span class="info-label">Battery Temp</span>
                 <span class="info-value" id="batt-temp">--&deg;C</span>
             </div>
@@ -317,6 +321,7 @@ body {
                 <span class="info-label">Drive Mode</span>
                 <span class="info-value" id="drive-mode">--</span>
             </div>
+            <div id="temp-warning" style="display:none; margin-top:8px; padding:8px; background:#ff000033; border:1px solid #ff4444; border-radius:6px; text-align:center; font-weight:bold; color:#ff4444; font-size:13px;"></div>
         </div>
     </div>
 
@@ -656,10 +661,53 @@ async function poll() {
         if (s.HVBatt_SOC_raw) document.getElementById('soc').textContent = s.HVBatt_SOC_raw.value.toFixed(1) + '%';
         if (s.BMS_packVoltage) document.getElementById('voltage').textContent = s.BMS_packVoltage.value.toFixed(0) + ' V';
         if (s.BMS_packCurrent) document.getElementById('current').textContent = s.BMS_packCurrent.value.toFixed(1) + ' A';
-        if (s.DI_statorTemp) document.getElementById('motor-temp').textContent = s.DI_statorTemp.value + '\u00B0C';
-        if (s.BMS_packTempMax) document.getElementById('batt-temp').textContent = s.BMS_packTempMax.value + '\u00B0C';
+        // Temperature monitoring with color coding and warnings
+        const tempWarning = document.getElementById('temp-warning');
+        let warnings = [];
+
+        if (s.DI_statorTemp) {
+            const mt = s.DI_statorTemp.value;
+            const mtEl = document.getElementById('motor-temp');
+            mtEl.textContent = mt + '\u00B0C';
+            mtEl.style.color = mt > 140 ? '#ff0000' : mt > 120 ? '#ff6600' : mt > 100 ? '#ffaa00' : '#fff';
+            if (mt > 140) warnings.push('MOTOR OVERHEATING: ' + mt + '\u00B0C — STOP NOW');
+            else if (mt > 120) warnings.push('Motor hot: ' + mt + '\u00B0C — ease off');
+        }
+
+        if (s.DI_inverterTemp) {
+            const it = s.DI_inverterTemp.value;
+            const itEl = document.getElementById('inverter-temp');
+            itEl.textContent = it + '\u00B0C';
+            itEl.style.color = it > 80 ? '#ff0000' : it > 65 ? '#ff6600' : it > 50 ? '#ffaa00' : '#fff';
+            if (it > 80) warnings.push('INVERTER OVERHEATING: ' + it + '\u00B0C — STOP NOW');
+            else if (it > 65) warnings.push('Inverter warm: ' + it + '\u00B0C');
+        }
+
+        if (s.BMS_packTempMax) {
+            const bt = s.BMS_packTempMax.value;
+            const btEl = document.getElementById('batt-temp');
+            btEl.textContent = bt + '\u00B0C';
+            btEl.style.color = bt > 50 ? '#ff0000' : bt > 42 ? '#ff6600' : bt > 35 ? '#ffaa00' : bt < 15 ? '#00aaff' : '#fff';
+            if (bt > 50) warnings.push('BATTERY OVERHEATING: ' + bt + '\u00B0C — STOP NOW');
+            else if (bt > 42) warnings.push('Battery hot: ' + bt + '\u00B0C — let it cool');
+            else if (bt < 10) warnings.push('Battery cold: ' + bt + '\u00B0C — reduced power');
+        }
+
         if (s.AmbientTemp) document.getElementById('ambient').textContent = s.AmbientTemp.value + '\u00B0C';
         if (s.UI_pedalMap) document.getElementById('drive-mode').textContent = s.UI_pedalMap.display;
+
+        // Show/hide temperature warning banner
+        if (warnings.length > 0) {
+            tempWarning.style.display = 'block';
+            tempWarning.textContent = warnings.join(' | ');
+            // Auto-kill Colin mode if anything is overheating
+            if (warnings.some(w => w.includes('STOP NOW')) && data.colin_mode) {
+                setGhost('off');
+                tempWarning.textContent += ' — COLIN MODE AUTO-DISABLED';
+            }
+        } else {
+            tempWarning.style.display = 'none';
+        }
 
         // Wheel speeds
         if (s.WheelSpeed_FL) document.getElementById('wfl').textContent = s.WheelSpeed_FL.value.toFixed(1);
