@@ -111,21 +111,38 @@ def extract_le(data_bytes, start_bit, bit_length, scale, offset):
 
 
 def parse_frame(line):
+    """Parse CAN frame - handles both ATS0 (no spaces) and ATS1 (spaces) formats."""
     line = line.strip()
     if not line or line.startswith(">") or line.startswith("#"):
         return None, None
     if any(x in line for x in ["STOPPED", "ERROR", "BUFFER", "SEARCHING", "NO DATA", "OK", "ELM", "STN"]):
         return None, None
+
+    # Try space-separated format first: "1D8 29 00 00 00 00 00 A0 A2"
     parts = line.split()
-    if len(parts) < 2:
-        return None, None
-    cid = parts[0].upper()
-    if not all(c in "0123456789ABCDEF" for c in cid) or len(cid) > 8:
-        return None, None
-    try:
-        return int(cid, 16), parts[1:]
-    except ValueError:
-        return None, None
+    if len(parts) >= 2:
+        cid = parts[0].upper()
+        if all(c in "0123456789ABCDEF" for c in cid) and len(cid) <= 3:
+            try:
+                return int(cid, 16), parts[1:]
+            except ValueError:
+                pass
+
+    # Try no-space format: "1D8290000000000A0A2"
+    # CAN ID is 3 hex chars, data is pairs of hex chars after
+    clean = line.upper().strip()
+    if len(clean) >= 5 and all(c in "0123456789ABCDEF" for c in clean):
+        cid_str = clean[:3]
+        data_str = clean[3:]
+        if len(data_str) >= 2 and len(data_str) % 2 == 0:
+            try:
+                can_id = int(cid_str, 16)
+                data = [data_str[i:i+2] for i in range(0, len(data_str), 2)]
+                return can_id, data
+            except ValueError:
+                pass
+
+    return None, None
 
 
 def calc_checksum_334(frame_bytes):
@@ -161,8 +178,8 @@ class Ghost3D:
         try:
             self.ser = serial.Serial(self.port, DEFAULT_BAUD, timeout=1)
             time.sleep(0.5)
-            for cmd, wait in [("ATZ", 2), ("ATE0", 0.5), ("ATH1", 0.5),
-                              ("ATS1", 0.5), ("ATSP6", 0.5), ("ATCAF0", 0.5)]:
+            for cmd, wait in [("ATZ", 2), ("ATE0", 0.5), ("ATL1", 0.5), ("ATH1", 0.5),
+                              ("ATS0", 0.5), ("ATSP6", 0.5), ("ATCAF0", 0.5), ("ATR1", 0.5)]:
                 self.ser.write((cmd + "\r").encode())
                 time.sleep(wait)
                 self.ser.read(self.ser.in_waiting)
@@ -247,12 +264,10 @@ class Ghost3D:
     def _init_for_read(self):
         """Reinitialize adapter for reading after writing."""
         try:
-            self.ser.write(b"ATH1\r")
-            time.sleep(0.03)
-            self.ser.read(self.ser.in_waiting)
-            self.ser.write(b"ATS1\r")
-            time.sleep(0.03)
-            self.ser.read(self.ser.in_waiting)
+            for cmd in ["ATL1", "ATH1", "ATS0", "ATSP6", "ATCAF0", "ATR1"]:
+                self.ser.write((cmd + "\r").encode())
+                time.sleep(0.03)
+                self.ser.read(self.ser.in_waiting)
             self._read_initialized = True
         except Exception:
             pass
