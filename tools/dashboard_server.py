@@ -34,8 +34,8 @@ SIGNALS = {
     0x252: {
         "BMS_packVoltage": (0, 16, 0.01, 0, "V", "little"),
     },
-    0x261: {
-        "DI_elecPower": (0, 11, 0.5, -512, "kW", "little"),
+    0x266: {
+        "RearPower_kW": (0, 11, 0.5, 0, "kW", "little"),
     },
     0x292: {
         "BMS_packCurrent": (0, 16, 0.1, -1000, "A", "little"),
@@ -107,7 +107,7 @@ DASHBOARD_GROUPS = {
                 "BMS_packTempMax", "BMS_packTempMin"],
     "Driver Inputs": ["DI_accelPedalPos", "DI_brakePedalState"],
     "Temperature": ["AmbientTemp", "DI_inverterTemp", "DI_statorTemp"],
-    "Power & Mode": ["DI_elecPower", "UI_pedalMap", "UI_steeringTuneRequest"],
+    "Power & Mode": ["RearPower_kW", "UI_pedalMap", "UI_steeringTuneRequest"],
     "Body": ["VCLEFT_frontDoorState", "VCLEFT_rearDoorState",
              "VCRIGHT_frontDoorState", "VCRIGHT_rearDoorState"],
     "Control": ["UI_powertrainControl"],

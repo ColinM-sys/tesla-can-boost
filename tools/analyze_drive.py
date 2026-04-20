@@ -2,7 +2,7 @@
 import sys
 import os
 
-def extract_le(data_bytes, start_bit, bit_length, scale, offset):
+def extract_le(data_bytes, start_bit, bit_length, scale, offset, signed=False):
     byte_vals = [int(b, 16) for b in data_bytes]
     while len(byte_vals) < 8:
         byte_vals.append(0)
@@ -11,6 +11,8 @@ def extract_le(data_bytes, start_bit, bit_length, scale, offset):
         raw_val |= (bv << (i * 8))
     mask = (1 << bit_length) - 1
     extracted = (raw_val >> start_bit) & mask
+    if signed and (extracted >> (bit_length - 1)):
+        extracted -= (1 << bit_length)
     return round(extracted * scale + offset, 3)
 
 # Signals to track
@@ -30,7 +32,7 @@ TRACK = {
     0x389: [("WheelFR", 0, 16, 0.01, 0)],
     0x38A: [("WheelRL", 0, 16, 0.01, 0)],
     0x38B: [("WheelRR", 0, 16, 0.01, 0)],
-    0x261: [("Power_kW", 0, 11, 0.5, -512)],
+    0x266: [("Power_kW", 0, 11, 0.5, 0, True)],  # RearPower266, signed
     0x334: [("PedalMap", 5, 2, 1, 0)],
 }
 
@@ -59,9 +61,11 @@ def analyze(filepath):
             frame_count += 1
 
             if can_id in TRACK:
-                for sig_name, start, length, scale, offset in TRACK[can_id]:
+                for sig_tuple in TRACK[can_id]:
+                    sig_name, start, length, scale, offset = sig_tuple[:5]
+                    signed = sig_tuple[5] if len(sig_tuple) > 5 else False
                     try:
-                        val = extract_le(data, start, length, scale, offset)
+                        val = extract_le(data, start, length, scale, offset, signed)
                         if sig_name not in history:
                             history[sig_name] = []
                         history[sig_name].append((timestamp, val))
