@@ -11,6 +11,15 @@ Open-source tools for reading, writing, and analyzing CAN bus data on Tesla Mode
 - **Drive Recording** — Log all CAN traffic during drives for offline analysis
 - **Signal Analysis** — Timeline view of pedal position, steering angle, speed, power
 
+## Used in Tesla Mod (Flipper Zero and ESP32)
+
+The acceleration-mode idea from this repo is credited in [hypery11/flipper-tesla-fsd](https://github.com/hypery11/flipper-tesla-fsd) ("Tesla Mod"), an open-source Tesla CAN bus project for the Flipper Zero and ESP32 with about 1,300 GitHub stars.
+
+- **Credited on October 8, 2026.** That day the project added an opt-in Acceleration Mode on CAN ID `0x334` to its ESP32 firmware (commit [`b4ebde9`](https://github.com/hypery11/flipper-tesla-fsd/commit/b4ebde9), feature request [#211](https://github.com/hypery11/flipper-tesla-fsd/issues/211)). Its README credits it as "Idea from ColinM-sys/tesla-can-boost".
+- **Released on October 14, 2026** in the project's stable v2.16.0.
+- **Using an ESP32?** Check out that repo instead of a laptop and OBD adapter: [hypery11/flipper-tesla-fsd](https://github.com/hypery11/flipper-tesla-fsd).
+- **Using a Flipper Zero?** The same project is on the Flipper Apps catalog as [Tesla Mod](https://lab.flipper.net/apps/tesla_mod).
+
 ## Ghost Mode (Drive Mode Modification)
 
 Ghost mode works by injecting CAN frames that override the touchscreen's drive mode setting. The motor controller accepts the CAN bus value regardless of what the UI displays.
@@ -206,6 +215,7 @@ Write: ATSH + data  ──► inject frame  ──► car responds
 - [onyx-m2/onyx-m2-dbc](https://github.com/onyx-m2/onyx-m2-dbc) — Onyx M2 Tesla DBC file
 - [commaai/opendbc](https://github.com/commaai/opendbc) — Open CAN database for many vehicles
 - [tomas7470/tesladash](https://github.com/tomas7470/tesladash) — Raspberry Pi Tesla dashboard
+- [hypery11/flipper-tesla-fsd](https://github.com/hypery11/flipper-tesla-fsd) — Tesla Mod for Flipper Zero and ESP32; credits this repo for its acceleration mode
 
 ## Disclaimer
 
